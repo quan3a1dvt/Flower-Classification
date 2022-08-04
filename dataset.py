@@ -1,40 +1,53 @@
 
-import numpy
-import torch
+import numpy as np
 from torch.utils.data import DataLoader, Dataset, ConcatDataset
-from sklearn.model_selection import train_test_split
-import os
+import torch
+class FlowerDataset(Dataset):
+
+    def __init__(self, imgs_name, labels):
+        super(FlowerDataset, self).__init__()
+        self.imgs_name = imgs_name
+        self.labels = labels
+
+    def __len__(self):
+        return len(self.imgs_name)
+
+    def __getitem__(self, item):
+        img_name = self.imgs_name[item]
+        label = self.labels[item]
+        return {
+            'img_name': img_name,
+            'label': label,
+        }
+
+    @staticmethod
+    def pack(items):
+        mini_pack = {
+            k: TS_TYPE([x[k] for x in items])
+            for k, TS_TYPE in TENSOR_TYPES.items()
+        }
+        return mini_pack
+
+
+def keep(items):
+    return items
+
+
+def list_to_tensor(items):
+    tensors = [torch.from_numpy(item.numpy()) for item in items]
+    tensors = torch.stack(tensors, dim=0)
+    return tensors
+
+
+def flatten(items):
+    all_items = [y for x in items for y in x]
+    return torch.LongTensor(all_items)
+
+
+TENSOR_TYPES = {
+    'img_name': keep,
+    'label': keep,
+}
 
 if __name__ == '__main__':
-    labels = ['dandelion', 'daisy', 'tulip', 'sunflower', 'rose']
-    data_dir = "data/flowers"
-    X = []
-    y = []
-    img_name = []
-    k = 0
-    for label in labels:
-        dat = []
-        path = os.path.join(data_dir, label)
-        class_num = labels.index(label)
-        for img in os.listdir(path):
-            if k == 1:
-                print(img)
-            img_name.append(img)
-            X.append(k)
-            y.append(class_num)
-            k += 1
-
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
-
-    BATCH_SIZE = 32
-
-    torch_X_train = torch.tensor(X_train)
-    torch_y_train = torch.tensor(y_train)
-    torch_X_test = torch.tensor(X_test)
-    torch_y_test = torch.tensor(y_test)
-
-    train = torch.utils.data.TensorDataset(torch_X_train, torch_y_train)
-    test = torch.utils.data.TensorDataset(torch_X_test, torch_y_test)
-    print(len(train))
-    train_loader = torch.utils.data.DataLoader(train, batch_size=BATCH_SIZE, shuffle=True)
-    test_loader = torch.utils.data.DataLoader(test, batch_size=BATCH_SIZE, shuffle=False)
+    pass
